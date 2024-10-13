@@ -3,16 +3,20 @@ import streamlit as st
 import pandas as pd
 import snowflake.connector
 import re
+import os
+from dotenv import load_dotenv
 
-# Snowflake connection parameters
+# Load environment variables from .env file
+load_dotenv()
+# Snowflake connection parameters using environment variables
 conn_params = {
-    'account': 'PURESTORAGEIT',
-    'user': 'SVC_SAP_PROD',
-    'password': '2BEv/BxHiHCCAe&ixTy2',
+    'account': os.getenv('SNOWFLAKE_ACCOUNT'),
+    'user': os.getenv('SNOWFLAKE_USER'),
+    'password': os.getenv('SNOWFLAKE_PASSWORD'),
     'role': 'ASCEND_ANALYST_PROD',
-    'warehouse': 'ASCEND_SM_WH',
-    'database': 'EDL_SAP_PROD',
-    'schema': 'PS_SAP',
+    'warehouse': os.getenv('SNOWFLAKE_WAREHOUSE'),
+    'database': os.getenv('SNOWFLAKE_DATABASE'),
+    'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
 
 # Query function for Snowflake
