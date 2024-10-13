@@ -1,0 +1,4 @@
+streamlit
+flask
+pandas
+snowflake-connector-python
