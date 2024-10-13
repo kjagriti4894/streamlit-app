@@ -3,20 +3,17 @@ import streamlit as st
 import pandas as pd
 import snowflake.connector
 import re
-import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-# Snowflake connection parameters using environment variables
+
+# Snowflake connection parameters
 conn_params = {
-    'account': os.getenv('SNOWFLAKE_ACCOUNT'),
-    'user': os.getenv('SNOWFLAKE_USER'),
-    'password': os.getenv('SNOWFLAKE_PASSWORD'),
+    'account': 'PURESTORAGEIT',
+    'user': 'SVC_SAP_PROD',
+    'password': '2BEv/BxHiHCCAe&ixTy2',
     'role': 'ASCEND_ANALYST_PROD',
-    'warehouse': os.getenv('SNOWFLAKE_WAREHOUSE'),
-    'database': os.getenv('SNOWFLAKE_DATABASE'),
-    'schema': os.getenv('SNOWFLAKE_SCHEMA'),
+    'warehouse': 'ASCEND_SM_WH',
+    'database': 'EDL_SAP_PROD',
+    'schema': 'PS_SAP',
 }
 
 # Query function for Snowflake
@@ -57,24 +54,22 @@ def chatbot():
             match = re.search(pattern, user_query)
 
             if match:
-                query = (f"SELECT header.cust_reference as \"Dispatch Order\" ,"
-                         "item.material AS \"Part Number\", "
-                         "item.ITEM_DESCR AS \"Description\", "
-                         "item.user_status_desc as \"User Status\", "
-                         "item.fe_status as \"FE User Status\", "
-                         "item.ups_order_number AS \"UPS Order Number\", "
-                         "header.order_reason AS \"Rejection Reason\", "
+                query = ("SELECT header.cust_reference as \"Dispatch Order\" , "
                          "header.order_status AS \"Overall Header User Status\", "
                          "item.requested_fe_arrival_zreqfearrdatecust AS \"Requested FE Date\", "
                          "item.requested_fe_arrival_zreqfearrtimecust AS \"Requested FE Time\", "
                          "header.lifsk AS \"Delivery Block\", "
+                         "item.material AS \"Part Number\", "
+                         "item.ITEM_DESCR AS \"Description\", "
                          "item.quantity AS \"Quantity\", "
-                         " item.item_category, "
+                         "item.ups_order_number AS \"UPS Order Number\", "
+                         "item.rejectionreason AS \"Rejection Reason\", "
+                         "item.item_category, "
                          "item.ARRAY_NAME, item.return_uii, item.dispatch_uii "
                          "FROM EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_HEADER_SET AS header "
                          "INNER JOIN EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_item_SET AS item "
                          "ON header.sales_document = item.sales_document "
-                         f"WHERE item.item_category IN ('ZRLB', 'ZSPR', 'ZSRV', 'ZPRE', 'ZREN') "
+                         "WHERE item.item_category IN ('ZRLB', 'ZSPR', 'ZSRV', 'ZPRE', 'ZREN') "
                          f"AND header.cust_reference = '{match.group()}'")
 
                 df = query_snowflake(query)
