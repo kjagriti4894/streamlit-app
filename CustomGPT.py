@@ -52,19 +52,19 @@ def chatbot():
     # Capture query parameters from the URL
     query_params = st.query_params  # Access the query parameters
 
-    # Add a debug statement to check if the URL parameter is captured correctly
+    # Debug output to check the captured query parameter
     st.write(f"Query parameters: {query_params}")
 
-    # Get 'user_query' parameter from URL if present, else use an empty string
-    user_query = query_params.get('user_query', [''])[0]  # Get 'user_query' parameter
+    # Get 'user_query' parameter from URL, if present; otherwise, use an empty string
+    user_query = query_params.get('user_query', [''])[0].strip()  # Capture and strip leading/trailing spaces
 
-    # Ensure any trailing/leading spaces are removed
-    user_query = user_query.strip()
+    # Debug: Output the full value of user_query to ensure it's correct
+    st.write(f"Captured user_query: {user_query}")
 
-    # Display the pre-filled query from the URL or allow user to input a new one
+    # Pre-fill the user input with the captured query from the URL
     user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
 
-    # Process user query
+    # Process user query when user submits
     if st.button("Submit"):
         if user_query:
             # Simplified query logic based on keywords
