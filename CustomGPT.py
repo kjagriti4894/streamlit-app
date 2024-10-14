@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Snowflake connection parameters using environment variables
+# Snowflake connection parameters
 conn_params = {
     'account': os.getenv('SNOWFLAKE_ACCOUNT'),
     'user': os.getenv('SNOWFLAKE_USER'),
@@ -19,13 +19,12 @@ conn_params = {
     'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
 
-# Query function for Snowflake
+# Query function with optimization (LIMIT the number of results)
 def query_snowflake(query):
-    conn = None
-    cursor = None
     try:
         conn = snowflake.connector.connect(**conn_params)
         cursor = conn.cursor()
+        st.write("Running query...")
         cursor.execute(query)
         rows = cursor.fetchall()
         if not rows:
@@ -37,58 +36,33 @@ def query_snowflake(query):
         st.error(f"Error during query execution: {e}")
         return None
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        cursor.close()
+        conn.close()
 
 # Streamlit chatbot interface
 def chatbot():
     st.title("Dispatch and Return Tracker")
 
-    # Capture query parameters from the URL (corrected)
-    query_params = st.query_params  # Use st.query_params without parentheses
+    # Capture query from user input
+    user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):")
 
-    # Get 'query' parameter if provided by Glean AI, else use default
-    user_query = query_params.get('query', [''])[0]  # Get the 'query' parameter from the URL
-
-    # Display the pre-filled query from the URL or allow user to input
-    user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
-
-    # Process user query
     if st.button("Submit"):
-        # st.write(f"User query: {user_query}")  # Remove this line to stop displaying the query
         if user_query:
             # Simplified query logic based on keywords
             pattern = r'PD\d+'
             match = re.search(pattern, user_query)
 
             if match:
-                query = (f"SELECT header.cust_reference as \"Dispatch Order\" ,"
-                         "item.material AS \"Part Number\", "
-                         "item.ITEM_DESCR AS \"Description\", "
-                         "item.user_status_desc as \"User Status\", "
-                         "item.fe_status as \"FE User Status\", "
-                         "item.ups_order_number AS \"UPS Order Number\", "
-                         "header.order_reason AS \"Rejection Reason\", "
-                         "header.order_status AS \"Overall Header User Status\", "
-                         "item.requested_fe_arrival_zreqfearrdatecust AS \"Requested FE Date\", "
-                         "item.requested_fe_arrival_zreqfearrtimecust AS \"Requested FE Time\", "
-                         "header.lifsk AS \"Delivery Block\", "
-                         "item.quantity AS \"Quantity\", "
-                         " item.item_category, "
-                         "item.ARRAY_NAME, item.return_uii, item.dispatch_uii "
+                query = (f"SELECT header.cust_reference as 'Dispatch Order', "
+                         "item.material AS 'Part Number', "
+                         "item.ITEM_DESCR AS 'Description', "
                          "FROM EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_HEADER_SET AS header "
                          "INNER JOIN EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_item_SET AS item "
-                         "ON header.sales_document = item.sales_document "
-                         f"WHERE item.item_category IN ('ZRLB', 'ZSPR', 'ZSRV', 'ZPRE', 'ZREN') "
-                         f"AND header.cust_reference = '{match.group()}'")
+                         f"WHERE header.cust_reference = '{match.group()}' LIMIT 100")  # Optimized
 
                 df = query_snowflake(query)
                 if df is not None:
                     st.write(df)
-                else:
-                    st.write("No data found.")
 
 # Run the chatbot
 if __name__ == "__main__":
