@@ -59,8 +59,8 @@ def chatbot():
     # Get and decode 'user_query' parameter from URL, if present; otherwise, use an empty string
     user_query = unquote(query_params.get('user_query', [''])[0]).strip()
 
-    # Debugging ASCII values of the query to check for encoding issues
-    st.write(f"ASCII values of user_query: {[ord(c) for c in user_query]}")
+    # Debugging decoded user_query value
+    st.write(f"Decoded user_query: {user_query}")
 
     # Display the pre-filled query from the URL or allow user to input
     user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
@@ -104,6 +104,6 @@ def chatbot():
             st.write("Please enter a query.")
 
 
-# Fix the issue with __name__ comparison
+# Run the chatbot
 if __name__ == "__main__":
     chatbot()
