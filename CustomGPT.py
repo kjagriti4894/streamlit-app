@@ -3,6 +3,7 @@ import pandas as pd
 import snowflake.connector
 import re
 import os
+from urllib.parse import unquote  # Added for URL decoding
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -52,19 +53,19 @@ def chatbot():
     # Capture query parameters from the URL
     query_params = st.query_params  # Access the query parameters
 
-    # Debug output to check the captured query parameter
+    # Debugging the query parameters
     st.write(f"Query parameters: {query_params}")
 
-    # Get 'user_query' parameter from URL, if present; otherwise, use an empty string
-    user_query = query_params.get('user_query', [''])[0].strip()  # Capture and strip leading/trailing spaces
+    # Get and decode 'user_query' parameter from URL, if present; otherwise, use an empty string
+    user_query = unquote(query_params.get('user_query', [''])[0]).strip()
 
-    # Debug: Output the full value of user_query to ensure it's correct
-    st.write(f"Captured user_query: {user_query}")
+    # Debugging ASCII values of the query to check for encoding issues
+    st.write(f"ASCII values of user_query: {[ord(c) for c in user_query]}")
 
-    # Pre-fill the user input with the captured query from the URL
+    # Display the pre-filled query from the URL or allow user to input
     user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
 
-    # Process user query when user submits
+    # Process user query
     if st.button("Submit"):
         if user_query:
             # Simplified query logic based on keywords
@@ -104,5 +105,4 @@ def chatbot():
 
 
 # Run the chatbot
-if __name__ == "__main__":
-    chatbot()
+if __name__ == "__
