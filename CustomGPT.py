@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Snowflake connection parameters using environment variables
+# Snowflake connection parameters
 conn_params = {
     'account': os.getenv('SNOWFLAKE_ACCOUNT'),
     'user': os.getenv('SNOWFLAKE_USER'),
@@ -18,6 +18,7 @@ conn_params = {
     'database': os.getenv('SNOWFLAKE_DATABASE'),
     'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
+
 
 # Query function for Snowflake
 def query_snowflake(query):
@@ -43,6 +44,7 @@ def query_snowflake(query):
         if conn:
             conn.close()
 
+
 # Streamlit chatbot interface
 def chatbot():
     st.title("Dispatch and Return Tracker")
@@ -50,10 +52,16 @@ def chatbot():
     # Capture query parameters from the URL
     query_params = st.query_params  # Access the query parameters
 
-    # Get 'user_query' parameter from URL if present, else use an empty string
-    user_query = query_params.get('user_query', [''])[0]  # Capture 'user_query' parameter from the URL
+    # Add a debug statement to check if the URL parameter is captured correctly
+    st.write(f"Query parameters: {query_params}")
 
-    # Display the pre-filled query or allow the user to input a new one
+    # Get 'user_query' parameter from URL if present, else use an empty string
+    user_query = query_params.get('user_query', [''])[0]  # Get 'user_query' parameter
+
+    # Ensure any trailing/leading spaces are removed
+    user_query = user_query.strip()
+
+    # Display the pre-filled query from the URL or allow user to input a new one
     user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
 
     # Process user query
@@ -90,9 +98,10 @@ def chatbot():
                 else:
                     st.write("No data found.")
             else:
-                st.write("Invalid query or no match found.")
+                st.write("No valid order ID found in the query.")
         else:
             st.write("Please enter a query.")
+
 
 # Run the chatbot
 if __name__ == "__main__":
