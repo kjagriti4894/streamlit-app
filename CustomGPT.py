@@ -3,7 +3,7 @@ import pandas as pd
 import snowflake.connector
 import re
 import os
-from urllib.parse import unquote  # Added for URL decoding
+from urllib.parse import unquote
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -19,7 +19,6 @@ conn_params = {
     'database': os.getenv('SNOWFLAKE_DATABASE'),
     'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
-
 
 # Query function for Snowflake
 def query_snowflake(query):
@@ -45,7 +44,6 @@ def query_snowflake(query):
         if conn:
             conn.close()
 
-
 # Streamlit chatbot interface
 def chatbot():
     st.title("Dispatch and Return Tracker")
@@ -63,6 +61,7 @@ def chatbot():
     st.write(f"Decoded user_query: {user_query}")
 
     # Display the pre-filled query from the URL or allow user to input
+    # For testing, hardcode a value in case user_query is not working
     user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
 
     # Process user query
@@ -102,7 +101,6 @@ def chatbot():
                 st.write("No valid order ID found in the query.")
         else:
             st.write("Please enter a query.")
-
 
 # Run the chatbot
 if __name__ == "__main__":
