@@ -104,5 +104,6 @@ def chatbot():
             st.write("Please enter a query.")
 
 
-# Run the chatbot
-if __name__ == "__
+# Fix the issue with __name__ comparison
+if __name__ == "__main__":
+    chatbot()
