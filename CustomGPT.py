@@ -19,7 +19,6 @@ conn_params = {
     'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
 
-
 # Query function for Snowflake
 def query_snowflake(query):
     conn = None
@@ -30,6 +29,7 @@ def query_snowflake(query):
         cursor.execute(query)
         rows = cursor.fetchall()
         if not rows:
+            st.write("No rows found.")
             return None
         df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])
         return df
@@ -42,13 +42,12 @@ def query_snowflake(query):
         if conn:
             conn.close()
 
-
 # Streamlit chatbot interface
 def chatbot():
     st.title("Dispatch and Return Tracker")
 
-    # Capture query parameters from the URL
-    query_params = st.query_params()  # Use st.query_params instead of experimental
+    # Capture query parameters from the URL (corrected)
+    query_params = st.query_params  # Use st.query_params without parentheses
 
     # Get 'query' parameter if provided by Glean AI, else use default
     user_query = query_params.get('query', [''])[0]  # Get the 'query' parameter from the URL
@@ -58,6 +57,7 @@ def chatbot():
 
     # Process user query
     if st.button("Submit"):
+        # st.write(f"User query: {user_query}")  # Remove this line to stop displaying the query
         if user_query:
             # Simplified query logic based on keywords
             pattern = r'PD\d+'
@@ -90,16 +90,6 @@ def chatbot():
                 else:
                     st.write("No data found.")
 
-            elif "order" in user_query.lower():
-                query = "SELECT sales_document, order_status, cust_reference FROM V_SAP_ORDER_HEADER_SET"
-                order_status = None
-
-                statuses = ["Open", "Blocked", "Submitted to Vendors", "Cancelled", "Delivered", "Ready to Dispatch",
-                            "Confirmed"]
-
-                for status in statuses:
-                    if status.lower() in user_query:
-                        order_status = status  # Capitalize for SQL consistency
-                        break
-
-
+# Run the chatbot
+if __name__ == "__main__":
+    chatbot()
