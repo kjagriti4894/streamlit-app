@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Snowflake connection parameters
+# Snowflake connection parameters using environment variables
 conn_params = {
     'account': os.getenv('SNOWFLAKE_ACCOUNT'),
     'user': os.getenv('SNOWFLAKE_USER'),
@@ -19,8 +19,10 @@ conn_params = {
     'schema': os.getenv('SNOWFLAKE_SCHEMA'),
 }
 
-# Query function with optimization (LIMIT the number of results)
+# Query function for Snowflake
 def query_snowflake(query):
+    conn = None
+    cursor = None
     try:
         conn = snowflake.connector.connect(**conn_params)
         cursor = conn.cursor()
@@ -36,16 +38,25 @@ def query_snowflake(query):
         st.error(f"Error during query execution: {e}")
         return None
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # Streamlit chatbot interface
 def chatbot():
     st.title("Dispatch and Return Tracker")
 
-    # Capture query from user input
-    user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):")
+    # Capture query parameters from the URL
+    query_params = st.query_params  # Access the query parameters
 
+    # Get 'user_query' parameter from URL if present, else use an empty string
+    user_query = query_params.get('user_query', [''])[0]  # Capture 'user_query' parameter from the URL
+
+    # Display the pre-filled query or allow the user to input a new one
+    user_query = st.text_input("Ask a question (e.g., 'Show orders', 'Search for customer'):", value=user_query)
+
+    # Process user query
     if st.button("Submit"):
         if user_query:
             # Simplified query logic based on keywords
@@ -53,16 +64,35 @@ def chatbot():
             match = re.search(pattern, user_query)
 
             if match:
-                query = (f"SELECT header.cust_reference as 'Dispatch Order', "
-                         "item.material AS 'Part Number', "
-                         "item.ITEM_DESCR AS 'Description', "
+                query = (f"SELECT header.cust_reference as \"Dispatch Order\", "
+                         "item.material AS \"Part Number\", "
+                         "item.ITEM_DESCR AS \"Description\", "
+                         "item.user_status_desc as \"User Status\", "
+                         "item.fe_status as \"FE User Status\", "
+                         "item.ups_order_number AS \"UPS Order Number\", "
+                         "header.order_reason AS \"Rejection Reason\", "
+                         "header.order_status AS \"Overall Header User Status\", "
+                         "item.requested_fe_arrival_zreqfearrdatecust AS \"Requested FE Date\", "
+                         "item.requested_fe_arrival_zreqfearrtimecust AS \"Requested FE Time\", "
+                         "header.lifsk AS \"Delivery Block\", "
+                         "item.quantity AS \"Quantity\", "
+                         "item.item_category, "
+                         "item.ARRAY_NAME, item.return_uii, item.dispatch_uii "
                          "FROM EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_HEADER_SET AS header "
                          "INNER JOIN EDL_SAP_PROD.PS_SAP.V_SAP_ORDER_item_SET AS item "
-                         f"WHERE header.cust_reference = '{match.group()}' LIMIT 100")  # Optimized
+                         "ON header.sales_document = item.sales_document "
+                         f"WHERE item.item_category IN ('ZRLB', 'ZSPR', 'ZSRV', 'ZPRE', 'ZREN') "
+                         f"AND header.cust_reference = '{match.group()}'")
 
                 df = query_snowflake(query)
                 if df is not None:
                     st.write(df)
+                else:
+                    st.write("No data found.")
+            else:
+                st.write("Invalid query or no match found.")
+        else:
+            st.write("Please enter a query.")
 
 # Run the chatbot
 if __name__ == "__main__":
